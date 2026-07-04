@@ -256,7 +256,12 @@
             // น้องจะใช้ JavaScript เพื่อดึงพิกัด (Lat/Long) และแสดงจุดปักหมุดที่ถูกต้องตรงนี้
         });
     </script>
-
+    <script>
+        const token = localStorage.getItem('token')
+        if (!token) {
+            window.location.href = '/login.html'
+        }
+    </script>
 </body>
 
 </html>
