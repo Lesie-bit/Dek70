@@ -2,6 +2,12 @@
 <html lang="th">
 
 <head>
+        <script>
+        const token = localStorage.getItem('token')
+        if (!token) {
+            window.location.href = '/login.html'
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPS Maintenance Request - โรงเรียนสรรพวิทยาคม</title>
@@ -256,12 +262,7 @@
             // น้องจะใช้ JavaScript เพื่อดึงพิกัด (Lat/Long) และแสดงจุดปักหมุดที่ถูกต้องตรงนี้
         });
     </script>
-    <script>
-        const token = localStorage.getItem('token')
-        if (!token) {
-            window.location.href = '/login.html'
-        }
-    </script>
+
 </body>
 
 </html>
