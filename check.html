@@ -26,6 +26,11 @@
             border-bottom: 2px solid #e0e0e0;
         }
     </style>
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'login.html'
+        }
+    </script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
