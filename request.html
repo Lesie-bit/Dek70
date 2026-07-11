@@ -2,7 +2,7 @@
 <html lang="th">
 
 <head>
-        <script>
+    <script>
         const token = localStorage.getItem('token')
         if (!token) {
             window.location.href = '/login.html'
@@ -19,20 +19,16 @@
             background-color: #f4f6f9;
         }
 
-        /* Custom school color palette */
         .bg-school {
             background-color: #f1f8fc;
-            /* Light school blue/grey */
         }
 
         .text-school-primary {
             color: #007bff;
-            /* Primary school blue */
         }
 
         .card-header-custom {
             background-color: #d8ecf9;
-            /* Card header color */
             border-bottom: 2px solid #e0e0e0;
         }
 
@@ -66,6 +62,14 @@
         form label {
             font-weight: 500;
         }
+
+        #uploadPreview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -80,9 +84,9 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="index.html">หน้าหลัก</a>
+                    </li>
+                </ul>
             </div>
-
-        </div>
         </div>
     </nav>
 
@@ -163,13 +167,14 @@
 
                             <div class="mb-4">
                                 <label for="repairPhoto" class="form-label">แนบรูปภาพ (ถ้ามี)</label>
-                                <input class="form-control" type="file" id="repairPhoto">
+                                <input class="form-control" type="file" id="repairPhoto" accept="image/*">
+                                <img id="uploadPreview" src="" alt="preview">
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-outline-secondary"
                                     onclick="resetForm()">ยกเลิก</button>
-                                <button type="submit" class="btn btn-primary btn-lg px-5">ส่งคำร้อง</button>
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">ส่งคำร้อง</button>
                             </div>
                         </form>
                     </div>
@@ -196,71 +201,142 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 
     <script>
-        // 1. กทท. กำหนดวันที่แจ้งอัตโนมัติ
+        // กำหนดวันที่แจ้งอัตโนมัติ
         document.addEventListener('DOMContentLoaded', function () {
-            const dateInput = document.getElementById('reportDate');
-            const now = new Date();
-            const ThaiDateString = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-            dateInput.value = ThaiDateString;
-        });
+            const dateInput = document.getElementById('reportDate')
+            const now = new Date()
+            dateInput.value = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
 
-        // 2. ดักตอนกดปุ่ม "ส่งคำร้อง"
-        const form = document.getElementById('repairRequestForm');
-        form.addEventListener('submit', function (event) {
-            event.preventDefault(); // ป้องกันการ reload หน้า
+            // ดึงชื่อ user จาก localStorage มาใส่ช่องชื่อผู้แจ้งอัตโนมัติ
+            const user = JSON.parse(localStorage.getItem('user'))
+            if (user) {
+                document.getElementById('reporterName').value = user.name
+            }
+        })
 
-            // === ส่วนนี้คือตัวอย่าง Logic สำหรับ Prototype ยังไม่เชื่อมฐานข้อมูลจริง ===
-            const reporter = document.getElementById('reporterName').value;
-            const location = document.getElementById('locationBuilding').value + ' ' + document.getElementById('locationDetail').value;
-            const description = document.getElementById('repairDescription').value;
+        // แสดง preview รูปก่อนอัปโหลด
+        document.getElementById('repairPhoto').addEventListener('change', function () {
+            const file = this.files[0]
+            if (file) {
+                const reader = new FileReader()
+                reader.onload = function (e) {
+                    const preview = document.getElementById('uploadPreview')
+                    preview.src = e.target.result
+                    preview.style.display = 'block'
+                }
+                reader.readAsDataURL(file)
+            }
+        })
 
-            // เช็กข้อมูลขั้นต้น
-            if (!reporter || !document.getElementById('locationBuilding').value || !description) {
-                alert('❌ กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
-                return;
+        // ส่งฟอร์ม
+        const form = document.getElementById('repairRequestForm')
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault()
+
+            const title = document.getElementById('repairCategory').value + ' - ' + document.getElementById('locationBuilding').value
+            const location_building = document.getElementById('locationBuilding').value
+            const location_detail = document.getElementById('locationDetail').value
+            const description = document.getElementById('repairDescription').value
+            const contact_number = document.getElementById('contactNumber').value
+            const category = document.getElementById('repairCategory').value
+            const photoFile = document.getElementById('repairPhoto').files[0]
+
+            // เช็คข้อมูลที่จำเป็น
+            if (!location_building || !description) {
+                alert('❌ กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน')
+                return
             }
 
-            alert(`✅ ส่งคำร้องสำเร็จ (Prototype)! \nชื่อผู้แจ้ง: ${reporter}\nสถานที่: ${location}\nรายละเอียด: ${description}`);
-            resetForm(); // ล้างฟอร์ม
+            const btn = document.getElementById('submitBtn')
+            btn.disabled = true
+            btn.textContent = 'กำลังส่ง...'
 
-            /* === แนวทางการเชื่อมต่อ Supabase ในอนาคต ===
-               (น้องจะปรับแก้เพิ่มตรงนี้ทีหลัง)
-            
-               import { supabase } from './supabaseClient' // (ต้องสร้างไฟล์นี้ก่อน)
-    
-               const { data, error } = await supabase
-                 .from('repairs')
-                 .insert([{ 
-                     reporter_name: reporter, 
-                     location_building: document.getElementById('locationBuilding').value, 
-                     location_detail: document.getElementById('locationDetail').value,
-                     description: description,
-                     contact_number: document.getElementById('contactNumber').value,
-                     category: document.getElementById('repairCategory').value,
-                     status: 'Wait for Review' // เซ็ตสถานะเริ่มต้น
-                 }])
-               
-               if (error) { console.error('❌ Error saving to Supabase:', error); }
-               else { console.log('✅ Supabase data saved!', data); }
-            */
-        });
+            try {
+                let image_url = null
+
+                // ถ้ามีรูป → อัปโหลดไป Cloudinary ก่อน
+                if (photoFile) {
+                    btn.textContent = 'กำลังอัปโหลดรูป...'
+
+                    // แปลงรูปเป็น base64
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader()
+                        reader.onload = (e) => resolve(e.target.result)
+                        reader.readAsDataURL(photoFile)
+                    })
+
+                    // ส่งไป api/upload.js
+                    const uploadRes = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: base64 })
+                    })
+                    const uploadData = await uploadRes.json()
+
+                    if (!uploadData.success) {
+                        alert('❌ อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่')
+                        btn.disabled = false
+                        btn.textContent = 'ส่งคำร้อง'
+                        return
+                    }
+
+                    image_url = uploadData.url
+                }
+
+                // ส่งข้อมูลไป api/repairs/index.js
+                btn.textContent = 'กำลังบันทึก...'
+                const token = localStorage.getItem('token')
+
+                const res = await fetch('/api/repairs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        title,
+                        category,
+                        location_building,
+                        location_detail,
+                        description,
+                        contact_number,
+                        image_url
+                    })
+                })
+
+                const data = await res.json()
+
+                if (data.success) {
+                    alert('✅ ส่งคำร้องสำเร็จ!')
+                    window.location.href = '/index.html'
+                } else {
+                    alert('❌ ' + data.error)
+                    btn.disabled = false
+                    btn.textContent = 'ส่งคำร้อง'
+                }
+
+            } catch (err) {
+                alert('❌ เกิดข้อผิดพลาด กรุณาลองใหม่')
+                btn.disabled = false
+                btn.textContent = 'ส่งคำร้อง'
+            }
+        })
 
         // ล้างฟอร์ม
         function resetForm() {
-            form.reset();
-            // รีเซ็ตวันที่แจ้งกลับไปที่เดิม
-            const dateInput = document.getElementById('reportDate');
-            const now = new Date();
-            const ThaiDateString = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-            dateInput.value = ThaiDateString;
+            form.reset()
+            document.getElementById('uploadPreview').style.display = 'none'
+            const dateInput = document.getElementById('reportDate')
+            const now = new Date()
+            dateInput.value = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
+            const user = JSON.parse(localStorage.getItem('user'))
+            if (user) document.getElementById('reporterName').value = user.name
         }
 
-        // ตัวอย่างเหตุการณ์ปักหมุดบนแผนที่
-        const mapPlaceholder = document.getElementById('mapPlaceholder');
-        mapPlaceholder.addEventListener('click', function () {
-            alert('(Prototype) ฟังก์ชันปักหมุดบนแผนที่โรงเรียนจำลอง (กำลังพัฒนา)');
-            // น้องจะใช้ JavaScript เพื่อดึงพิกัด (Lat/Long) และแสดงจุดปักหมุดที่ถูกต้องตรงนี้
-        });
+        // ปักหมุดแผนที่ (ยังเป็น prototype)
+        document.getElementById('mapPlaceholder').addEventListener('click', function () {
+            alert('(กำลังพัฒนา) ฟังก์ชันปักหมุดบนแผนที่โรงเรียน')
+        })
     </script>
 
 </body>
