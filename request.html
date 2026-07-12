@@ -35,51 +35,6 @@
         form label {
             font-weight: 500;
         }
-
-        /* Map styles */
-        .map-container {
-            position: relative;
-            width: 100%;
-            cursor: crosshair;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px dashed #adb5bd;
-        }
-
-        .map-container:hover {
-            border-color: #007bff;
-        }
-
-        .map-container img {
-            width: 100%;
-            display: block;
-            user-select: none;
-            pointer-events: none;
-        }
-
-        .map-pin {
-            position: absolute;
-            transform: translate(-50%, -100%);
-            font-size: 2rem;
-            pointer-events: none;
-            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.4));
-            display: none;
-        }
-
-        .map-hint {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #6c757d;
-            font-size: 0.95rem;
-            text-align: center;
-            pointer-events: none;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 8px 16px;
-            border-radius: 8px;
-        }
-
         /* Photo preview */
         #uploadPreview {
             max-width: 100%;
@@ -172,6 +127,7 @@
                                         <option value="สนามบาส">สนามบาส</option>
                                         <option value="ห้องสุขานักเรียน">ห้องสุขานักเรียน</option>
                                         <option value="ป้อมยาม">ป้อมยาม</option>
+                                        <option value="ห้องสภานักเรียน">ห้องสภานักเรียน</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -179,22 +135,6 @@
                                     <input type="text" class="form-control" id="locationDetail"
                                         placeholder="เช่น ห้อง 311, ชั้น 2">
                                 </div>
-                            </div>
-
-                            <!-- แผนที่ปักหมุด -->
-                            <div class="mb-3">
-                                <label class="form-label">📍 ปักหมุดบนแผนที่โรงเรียน</label>
-                                <div class="map-container" id="mapContainer">
-                                    <img src="https://res.cloudinary.com/daezwgbv/image/upload/v1783748805/sappha-re100_2569-2048x2048_1_wvsbte.jpg"
-                                        alt="แผนผังโรงเรียนสรรพวิทยาคม" id="mapImage">
-                                    <div class="map-hint" id="mapHint">
-                                        🖱️ คลิกบนแผนที่เพื่อปักหมุดจุดที่ชำรุด
-                                    </div>
-                                    <div class="map-pin" id="mapPinIcon">📍</div>
-                                </div>
-                                <small class="mt-1 d-block" id="pinLocationText"></small>
-                                <input type="hidden" id="pinX" value="">
-                                <input type="hidden" id="pinY" value="">
                             </div>
 
                             <div class="mb-3">
@@ -243,30 +183,6 @@
             const user = JSON.parse(localStorage.getItem('user'))
             if (user) document.getElementById('reporterName').value = user.name
         })
-
-        // ระบบปักหมุดแผนที่
-        const mapContainer = document.getElementById('mapContainer')
-        const mapPinIcon = document.getElementById('mapPinIcon')
-        const mapHint = document.getElementById('mapHint')
-        const pinLocationText = document.getElementById('pinLocationText')
-
-        mapContainer.addEventListener('click', function (e) {
-            const rect = mapContainer.getBoundingClientRect()
-            const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2)
-            const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2)
-
-            mapPinIcon.style.left = x + '%'
-            mapPinIcon.style.top = y + '%'
-            mapPinIcon.style.display = 'block'
-            mapHint.style.display = 'none'
-
-            document.getElementById('pinX').value = x
-            document.getElementById('pinY').value = y
-
-            pinLocationText.textContent = '📍 ปักหมุดแล้ว — คลิกใหม่เพื่อเปลี่ยนจุด'
-            pinLocationText.className = 'text-success mt-1 d-block'
-        })
-
         // Preview รูปภาพ
         document.getElementById('repairPhoto').addEventListener('change', function () {
             const file = this.files[0]
@@ -334,8 +250,6 @@
                         description,
                         contact_number: document.getElementById('contactNumber').value,
                         image_url,
-                        pin_x: document.getElementById('pinX').value,
-                        pin_y: document.getElementById('pinY').value
                     })
                 })
 
@@ -361,8 +275,6 @@
             document.getElementById('mapPinIcon').style.display = 'none'
             document.getElementById('mapHint').style.display = 'block'
             document.getElementById('pinLocationText').textContent = ''
-            document.getElementById('pinX').value = ''
-            document.getElementById('pinY').value = ''
             const now = new Date()
             document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', {
                 year: 'numeric', month: 'long', day: 'numeric'
