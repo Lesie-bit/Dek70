@@ -6,7 +6,9 @@
         if (!localStorage.getItem('token')) {
             window.location.href = 'login.html'
         }
+
     </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ระบบแจ้งซ่อมบำรุงโรงเรียน</title>
@@ -187,6 +189,12 @@
         const user = JSON.parse(localStorage.getItem('user'))
         if (user) {
             document.getElementById('userName').textContent = user.name
+            // เช็ค role redirect
+            if (user.role === 'technician') {
+                window.location.href = '/technician.html'
+            } else if (user.role === 'admin') {
+                window.location.href = '/admin.html'
+            }
         }
 
         function logout() {
@@ -194,6 +202,7 @@
             localStorage.removeItem('user')
             window.location.href = '/login.html'
         }
+
     </script>
 </body>
 

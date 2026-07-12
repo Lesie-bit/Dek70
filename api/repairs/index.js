@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         const col = db.collection('repair_requests')
 
         // admin เห็นทั้งหมด, student เห็นแค่ของตัวเอง
-        const filter = user.role === 'admin' ? {} : { reporter_id: user.userId }
+        const filter = (user.role === 'admin' || user.role === 'technician') ? {} : { reporter_id: user.userId }
         const requests = await col.find(filter).sort({ created_at: -1 }).toArray()
 
         return res.status(200).json(requests)
