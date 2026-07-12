@@ -32,37 +32,55 @@
             border-bottom: 2px solid #e0e0e0;
         }
 
-        .map-placeholder {
-            height: 150px;
-            background-color: #e0e0e0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            color: #6c757d;
-            border: 2px dashed #adb5bd;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .map-placeholder:hover {
-            background-color: #d8ecf9;
-            border-color: #007bff;
-            color: #007bff;
-        }
-
-        .map-pin-icon {
-            font-size: 2rem;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
         form label {
             font-weight: 500;
         }
 
+        /* Map styles */
+        .map-container {
+            position: relative;
+            width: 100%;
+            cursor: crosshair;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px dashed #adb5bd;
+        }
+
+        .map-container:hover {
+            border-color: #007bff;
+        }
+
+        .map-container img {
+            width: 100%;
+            display: block;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .map-pin {
+            position: absolute;
+            transform: translate(-50%, -100%);
+            font-size: 2rem;
+            pointer-events: none;
+            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.4));
+            display: none;
+        }
+
+        .map-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #6c757d;
+            font-size: 0.95rem;
+            text-align: center;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        /* Photo preview */
         #uploadPreview {
             max-width: 100%;
             max-height: 200px;
@@ -74,16 +92,15 @@
 </head>
 
 <body>
-
     <nav class="navbar navbar-expand-lg navbar-light bg-school shadow-sm">
         <div class="container">
             <a class="navbar-brand text-school-primary" href="#">
                 <i class="fa-solid fa-school me-2"></i> ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม
             </a>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="index.html">หน้าหลัก</a>
+                        <a class="nav-link active" href="index.html">หน้าหลัก</a>
                     </li>
                 </ul>
             </div>
@@ -101,9 +118,8 @@
                         <p class="text-muted mb-4">กรุณากรอกข้อมูลเพื่อแจ้งซ่อมบำรุง หากมีรูปภาพโปรดแนบมาด้วย</p>
 
                         <form id="repairRequestForm">
-
                             <div class="mb-3 row">
-                                <label for="reportDate" class="col-sm-3 col-form-label">วันที่แจ้ง</label>
+                                <label class="col-sm-3 col-form-label">วันที่แจ้ง</label>
                                 <div class="col-sm-9">
                                     <input type="text" class="form-control" id="reportDate" readonly>
                                 </div>
@@ -111,19 +127,19 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="reporterName" class="form-label">ชื่อผู้แจ้ง</label>
+                                    <label class="form-label">ชื่อผู้แจ้ง</label>
                                     <input type="text" class="form-control" id="reporterName"
                                         placeholder="เช่น นายสมชาย สมบัติ">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="contactNumber" class="form-label">เบอร์ติดต่อกลับ (กรณีเร่งด่วน)</label>
+                                    <label class="form-label">เบอร์ติดต่อกลับ</label>
                                     <input type="tel" class="form-control" id="contactNumber"
                                         placeholder="เช่น 0xx-xxxxxxx">
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="repairCategory" class="form-label">ประเภทงานซ่อม</label>
+                                <label class="form-label">ประเภทงานซ่อม</label>
                                 <select class="form-select" id="repairCategory">
                                     <option value="" disabled selected>-- เลือกประเภทงาน --</option>
                                     <option value="ไฟฟ้า">ไฟฟ้า</option>
@@ -135,38 +151,60 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="locationBuilding" class="form-label">อาคาร/สถานที่หลัก</label>
+                                    <label class="form-label">อาคาร/สถานที่หลัก</label>
                                     <select class="form-select" id="locationBuilding">
                                         <option value="" disabled selected>-- เลือกอาคาร --</option>
-                                        <option value="อาคาร 1">อาคาร 1</option>
-                                        <option value="อาคาร 2">อาคาร 2</option>
-                                        <option value="อาคาร 3">อาคาร 3</option>
-                                        <option value="ยิมเนเซียม">ยิมเนเซียม</option>
+                                        <option value="อาคาร 1 ศรีเมืองฉอด">อาคาร 1 ศรีเมืองฉอด</option>
+                                        <option value="อาคาร 2 ทิวสน">อาคาร 2 ทิวสน</option>
+                                        <option value="อาคาร 3 เพชรประจิม">อาคาร 3 เพชรประจิม</option>
+                                        <option value="อาคาร 4 ขุนสามชน">อาคาร 4 ขุนสามชน</option>
+                                        <option value="อาคาร 5 อัญมณี">อาคาร 5 อัญมณี</option>
+                                        <option value="อาคาร 6 พระวอมิ่งขวัญ">อาคาร 6 พระวอมิ่งขวัญ</option>
+                                        <option value="อาคารอุตสาหกรรม">อาคารอุตสาหกรรม</option>
+                                        <option value="อาคารอเนกประสงค์">อาคารอเนกประสงค์</option>
+                                        <option value="อาคารพยาบาล">อาคารพยาบาล</option>
+                                        <option value="อาคารสรรพการและโรงอาหาร">อาคารสรรพการและโรงอาหาร</option>
+                                        <option value="อาคารโสตทัศนศึกษา">อาคารโสตทัศนศึกษา</option>
+                                        <option value="อาคารเฉลิมพระเกียรติ100ปี">อาคารเฉลิมพระเกียรติ 100 ปี</option>
+                                        <option value="โดมกิจกรรม">โดมกิจกรรม</option>
+                                        <option value="อัฒจันทร์">อัฒจันทร์</option>
+                                        <option value="สนามฟุตบอล">สนามฟุตบอล</option>
+                                        <option value="สนามบาส">สนามบาส</option>
+                                        <option value="ห้องสุขานักเรียน">ห้องสุขานักเรียน</option>
+                                        <option value="ป้อมยาม">ป้อมยาม</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="locationDetail" class="form-label">ห้อง/ชั้น/จุดสังเกต</label>
+                                    <label class="form-label">ห้อง/ชั้น/จุดสังเกต</label>
                                     <input type="text" class="form-control" id="locationDetail"
                                         placeholder="เช่น ห้อง 311, ชั้น 2">
                                 </div>
                             </div>
 
+                            <!-- แผนที่ปักหมุด -->
                             <div class="mb-3">
-                                <label class="form-label">📍 ปักหมุดบนแผนที่โรงเรียน (เพื่อความแม่นยำสูงสุด)</label>
-                                <div class="map-placeholder" id="mapPlaceholder">
-                                    <i class="fa-solid fa-location-dot map-pin-icon text-danger"></i>
-                                    คลิกเพื่อปักหมุดจุดที่ชำรุด
+                                <label class="form-label">📍 ปักหมุดบนแผนที่โรงเรียน</label>
+                                <div class="map-container" id="mapContainer">
+                                    <img src="https://res.cloudinary.com/daezwgbv/image/upload/v1783748805/sappha-re100_2569-2048x2048_1_wvsbte.jpg"
+                                        alt="แผนผังโรงเรียนสรรพวิทยาคม" id="mapImage">
+                                    <div class="map-hint" id="mapHint">
+                                        🖱️ คลิกบนแผนที่เพื่อปักหมุดจุดที่ชำรุด
+                                    </div>
+                                    <div class="map-pin" id="mapPinIcon">📍</div>
                                 </div>
+                                <small class="mt-1 d-block" id="pinLocationText"></small>
+                                <input type="hidden" id="pinX" value="">
+                                <input type="hidden" id="pinY" value="">
                             </div>
 
                             <div class="mb-3">
-                                <label for="repairDescription" class="form-label">รายละเอียดอาการเสีย</label>
+                                <label class="form-label">รายละเอียดอาการเสีย</label>
                                 <textarea class="form-control" id="repairDescription" rows="5"
                                     placeholder="กรุณาระบุรายละเอียด เช่น 'แอร์เปิดไม่ติด มีเสียงดัง'"></textarea>
                             </div>
 
                             <div class="mb-4">
-                                <label for="repairPhoto" class="form-label">แนบรูปภาพ (ถ้ามี)</label>
+                                <label class="form-label">แนบรูปภาพ (ถ้ามี)</label>
                                 <input class="form-control" type="file" id="repairPhoto" accept="image/*">
                                 <img id="uploadPreview" src="" alt="preview">
                             </div>
@@ -174,7 +212,8 @@
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-outline-secondary"
                                     onclick="resetForm()">ยกเลิก</button>
-                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">ส่งคำร้อง</button>
+                                <button type="submit" class="btn btn-primary btn-lg px-5"
+                                    id="submitBtn">ส่งคำร้อง</button>
                             </div>
                         </form>
                     </div>
@@ -186,40 +225,54 @@
     <footer class="bg-white border-top py-4 mt-5">
         <div class="container px-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-secondary">
-                <div>
-                    <small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียน. All rights reserved.</small>
-                </div>
-                <div>
-                    <small>พัฒนาโดย <span class="fw-bold text-dark">นักเรียนชั้น ม.6</span> |
-                        โปรเจ็กต์จบการศึกษา</small>
-                </div>
+                <div><small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียน. All rights reserved.</small></div>
+                <div><small>พัฒนาโดย <span class="fw-bold text-dark">นักเรียนชั้น ม.6</span> |
+                        โปรเจ็กต์จบการศึกษา</small></div>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // กำหนดวันที่แจ้งอัตโนมัติ
+        // กำหนดวันที่อัตโนมัติ
         document.addEventListener('DOMContentLoaded', function () {
-            const dateInput = document.getElementById('reportDate')
             const now = new Date()
-            dateInput.value = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
-
-            // ดึงชื่อ user จาก localStorage มาใส่ช่องชื่อผู้แจ้งอัตโนมัติ
+            document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            })
             const user = JSON.parse(localStorage.getItem('user'))
-            if (user) {
-                document.getElementById('reporterName').value = user.name
-            }
+            if (user) document.getElementById('reporterName').value = user.name
         })
 
-        // แสดง preview รูปก่อนอัปโหลด
+        // ระบบปักหมุดแผนที่
+        const mapContainer = document.getElementById('mapContainer')
+        const mapPinIcon = document.getElementById('mapPinIcon')
+        const mapHint = document.getElementById('mapHint')
+        const pinLocationText = document.getElementById('pinLocationText')
+
+        mapContainer.addEventListener('click', function (e) {
+            const rect = mapContainer.getBoundingClientRect()
+            const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2)
+            const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2)
+
+            mapPinIcon.style.left = x + '%'
+            mapPinIcon.style.top = y + '%'
+            mapPinIcon.style.display = 'block'
+            mapHint.style.display = 'none'
+
+            document.getElementById('pinX').value = x
+            document.getElementById('pinY').value = y
+
+            pinLocationText.textContent = '📍 ปักหมุดแล้ว — คลิกใหม่เพื่อเปลี่ยนจุด'
+            pinLocationText.className = 'text-success mt-1 d-block'
+        })
+
+        // Preview รูปภาพ
         document.getElementById('repairPhoto').addEventListener('change', function () {
             const file = this.files[0]
             if (file) {
                 const reader = new FileReader()
-                reader.onload = function (e) {
+                reader.onload = (e) => {
                     const preview = document.getElementById('uploadPreview')
                     preview.src = e.target.result
                     preview.style.display = 'block'
@@ -229,19 +282,12 @@
         })
 
         // ส่งฟอร์ม
-        const form = document.getElementById('repairRequestForm')
-        form.addEventListener('submit', async function (event) {
-            event.preventDefault()
+        document.getElementById('repairRequestForm').addEventListener('submit', async function (e) {
+            e.preventDefault()
 
-            const title = document.getElementById('repairCategory').value + ' - ' + document.getElementById('locationBuilding').value
             const location_building = document.getElementById('locationBuilding').value
-            const location_detail = document.getElementById('locationDetail').value
             const description = document.getElementById('repairDescription').value
-            const contact_number = document.getElementById('contactNumber').value
-            const category = document.getElementById('repairCategory').value
-            const photoFile = document.getElementById('repairPhoto').files[0]
 
-            // เช็คข้อมูลที่จำเป็น
             if (!location_building || !description) {
                 alert('❌ กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน')
                 return
@@ -253,37 +299,24 @@
 
             try {
                 let image_url = null
+                const photoFile = document.getElementById('repairPhoto').files[0]
 
-                // ถ้ามีรูป → อัปโหลดไป Cloudinary ก่อน
                 if (photoFile) {
                     btn.textContent = 'กำลังอัปโหลดรูป...'
-
-                    // แปลงรูปเป็น base64
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader()
                         reader.onload = (e) => resolve(e.target.result)
                         reader.readAsDataURL(photoFile)
                     })
-
-                    // ส่งไป api/upload.js
                     const uploadRes = await fetch('/api/upload', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ image: base64 })
                     })
                     const uploadData = await uploadRes.json()
-
-                    if (!uploadData.success) {
-                        alert('❌ อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่')
-                        btn.disabled = false
-                        btn.textContent = 'ส่งคำร้อง'
-                        return
-                    }
-
-                    image_url = uploadData.url
+                    if (uploadData.success) image_url = uploadData.url
                 }
 
-                // ส่งข้อมูลไป api/repairs/index.js
                 btn.textContent = 'กำลังบันทึก...'
                 const token = localStorage.getItem('token')
 
@@ -294,18 +327,19 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        title,
-                        category,
+                        title: document.getElementById('repairCategory').value + ' - ' + location_building,
+                        category: document.getElementById('repairCategory').value,
                         location_building,
-                        location_detail,
+                        location_detail: document.getElementById('locationDetail').value,
                         description,
-                        contact_number,
-                        image_url
+                        contact_number: document.getElementById('contactNumber').value,
+                        image_url,
+                        pin_x: document.getElementById('pinX').value,
+                        pin_y: document.getElementById('pinY').value
                     })
                 })
 
                 const data = await res.json()
-
                 if (data.success) {
                     alert('✅ ส่งคำร้องสำเร็จ!')
                     window.location.href = '/index.html'
@@ -314,7 +348,6 @@
                     btn.disabled = false
                     btn.textContent = 'ส่งคำร้อง'
                 }
-
             } catch (err) {
                 alert('❌ เกิดข้อผิดพลาด กรุณาลองใหม่')
                 btn.disabled = false
@@ -322,23 +355,22 @@
             }
         })
 
-        // ล้างฟอร์ม
         function resetForm() {
-            form.reset()
+            document.getElementById('repairRequestForm').reset()
             document.getElementById('uploadPreview').style.display = 'none'
-            const dateInput = document.getElementById('reportDate')
+            document.getElementById('mapPinIcon').style.display = 'none'
+            document.getElementById('mapHint').style.display = 'block'
+            document.getElementById('pinLocationText').textContent = ''
+            document.getElementById('pinX').value = ''
+            document.getElementById('pinY').value = ''
             const now = new Date()
-            dateInput.value = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
+            document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            })
             const user = JSON.parse(localStorage.getItem('user'))
             if (user) document.getElementById('reporterName').value = user.name
         }
-
-        // ปักหมุดแผนที่ (ยังเป็น prototype)
-        document.getElementById('mapPlaceholder').addEventListener('click', function () {
-            alert('(กำลังพัฒนา) ฟังก์ชันปักหมุดบนแผนที่โรงเรียน')
-        })
     </script>
-
 </body>
 
 </html>
