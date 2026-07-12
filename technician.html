@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'))
+        if (!user || user.role !== 'technician') {
+            window.location.href = '/login.html'
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน้าช่าง - ระบบแจ้งซ่อมบำรุง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .badge-pending {
+            background-color: #3b7ddd;
+        }
+
+        .badge-in_progress {
+            background-color: #fc931d;
+        }
+
+        .badge-done {
+            background-color: #37b762;
+        }
+
+        .card-repair {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+            margin-bottom: 16px;
+        }
+
+        .repair-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .map-mini {
+            position: relative;
+            display: inline-block;
+        }
+
+        .map-mini img {
+            width: 160px;
+            border-radius: 6px;
+        }
+
+        .map-pin-mini {
+            position: absolute;
+            font-size: 1.2rem;
+            transform: translate(-50%, -100%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-dark bg-dark py-3">
+        <div class="container px-4 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white d-flex align-items-center justify-content-center rounded-circle"
+                    style="width:40px;height:40px;">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <span class="fw-bold text-white">หน้าช่างซ่อมบำรุง</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-white"><i class="bi bi-person-circle me-1"></i><span id="techName"></span></span>
+                <button onclick="logout()" class="btn btn-outline-light btn-sm">ออกจากระบบ</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container px-4 mt-4 flex-grow-1">
+
+        <!-- filter tabs -->
+        <div class="d-flex gap-2 mb-4 flex-wrap">
+            <button class="btn btn-primary btn-sm active" onclick="filterStatus('all', this)">ทั้งหมด</button>
+            <button class="btn btn-outline-primary btn-sm" onclick="filterStatus('pending', this)">รอรับเรื่อง</button>
+            <button class="btn btn-outline-warning btn-sm"
+                onclick="filterStatus('in_progress', this)">กำลังดำเนินการ</button>
+            <button class="btn btn-outline-success btn-sm" onclick="filterStatus('done', this)">เสร็จแล้ว</button>
+        </div>
+
+        <div id="loadingMsg" class="text-center text-muted py-5">
+            <div class="spinner-border text-primary mb-3"></div>
+            <p>กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <div id="repairList"></div>
+
+    </div>
+
+    <footer class="bg-white border-top py-3 mt-5">
+        <div class="container px-4 text-center text-secondary">
+            <small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม</small>
+        </div>
+    </footer>
+
+    <!-- Modal ดูรูปใหญ่ -->
+    <div class="modal fade" id="imgModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0">
+                <div class="modal-body p-0 text-center bg-dark">
+                    <img id="imgModalSrc" src="" class="img-fluid" style="max-height:80vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal อัปเดตสถานะ -->
+    <div class="modal fade" id="updateModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">อัปเดตสถานะงาน</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-3" id="modalTitle"></p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">สถานะ</label>
+                        <select class="form-select" id="modalStatus">
+                            <option value="in_progress">กำลังดำเนินการ (รับงาน)</option>
+                            <option value="done">เสร็จแล้ว</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">หมายเหตุ</label>
+                        <textarea class="form-control" id="modalNote" rows="3"
+                            placeholder="บันทึกความคืบหน้า..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-success px-4" onclick="submitUpdate()">บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'))
+        const token = localStorage.getItem('token')
+        let allRepairs = []
+        let currentId = null
+        let currentFilter = 'all'
+
+        document.getElementById('techName').textContent = user?.name || ''
+
+        // โหลดข้อมูลทั้งหมด
+        async function loadRepairs() {
+            try {
+                const res = await fetch('/api/repairs?all=true', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                allRepairs = await res.json()
+                document.getElementById('loadingMsg').style.display = 'none'
+                renderList(allRepairs)
+            } catch (err) {
+                document.getElementById('loadingMsg').innerHTML = '<p class="text-danger">โหลดข้อมูลไม่สำเร็จ</p>'
+            }
+        }
+
+        function renderList(repairs) {
+            const list = document.getElementById('repairList')
+            if (repairs.length === 0) {
+                list.innerHTML = '<div class="text-center text-muted py-5">ไม่มีคำขอในขณะนี้</div>'
+                return
+            }
+
+            list.innerHTML = repairs.map(r => {
+                const date = new Date(r.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
+                const statusLabel = { pending: 'รอรับเรื่อง', in_progress: 'กำลังดำเนินการ', done: 'เสร็จแล้ว' }
+                const statusClass = { pending: 'badge-pending', in_progress: 'badge-in_progress', done: 'badge-done' }
+
+                const imgHtml = r.image_url
+                    ? `<img src="${r.image_url}" class="repair-img me-2" onclick="showImg('${r.image_url}')">`
+                    : ''
+
+                const mapHtml = r.pin_x && r.pin_y
+                    ? `<div class="map-mini mt-2">
+              <img src="https://res.cloudinary.com/daezwgbv/image/upload/v1783748805/sappha-re100_2569-2048x2048_1_wvsbte.jpg">
+              <span class="map-pin-mini" style="left:${r.pin_x}%;top:${r.pin_y}%">📍</span>
+             </div>`
+                    : ''
+
+                const assignedHtml = r.assigned_to
+                    ? `<small class="text-muted">ช่างผู้รับผิดชอบ: <strong>${r.assigned_to}</strong></small><br>`
+                    : ''
+
+                const noteHtml = r.note
+                    ? `<small class="text-muted">หมายเหตุ: ${r.note}</small><br>`
+                    : ''
+
+                const btnHtml = r.status !== 'done'
+                    ? `<button class="btn btn-primary btn-sm mt-2" onclick="openUpdate('${r._id}', '${r.title}')">
+              <i class="bi bi-pencil-square me-1"></i>อัปเดตสถานะ
+             </button>`
+                    : `<span class="badge bg-success mt-2">✅ เสร็จแล้ว</span>`
+
+                return `
+        <div class="card card-repair" data-status="${r.status}">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="fw-bold mb-0">${r.title}</h5>
+              <span class="badge ${statusClass[r.status]} rounded-pill px-3 py-2">${statusLabel[r.status]}</span>
+            </div>
+            <div class="text-muted small mb-2">
+              <i class="bi bi-geo-alt me-1"></i>${r.location_building} ${r.location_detail || ''}
+              &nbsp;|&nbsp;
+              <i class="bi bi-calendar me-1"></i>${date}
+              &nbsp;|&nbsp;
+              <i class="bi bi-person me-1"></i>${r.reporter_name}
+            </div>
+            <p class="mb-2">${r.description}</p>
+            ${assignedHtml}
+            ${noteHtml}
+            <div class="d-flex align-items-start gap-2 flex-wrap">
+              ${imgHtml}
+              ${mapHtml}
+            </div>
+            ${btnHtml}
+          </div>
+        </div>`
+            }).join('')
+        }
+
+        function filterStatus(status, btn) {
+            currentFilter = status
+            document.querySelectorAll('.btn-group-filter .btn, .d-flex.gap-2.mb-4 .btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary', 'btn-warning', 'btn-success')
+                b.classList.add(b.getAttribute('onclick').includes('pending') ? 'btn-outline-primary'
+                    : b.getAttribute('onclick').includes('in_progress') ? 'btn-outline-warning'
+                        : b.getAttribute('onclick').includes('done') ? 'btn-outline-success'
+                            : 'btn-outline-primary')
+            })
+            btn.classList.add('active')
+
+            const filtered = status === 'all' ? allRepairs : allRepairs.filter(r => r.status === status)
+            renderList(filtered)
+        }
+
+        function showImg(url) {
+            document.getElementById('imgModalSrc').src = url
+            new bootstrap.Modal(document.getElementById('imgModal')).show()
+        }
+
+        function openUpdate(id, title) {
+            currentId = id
+            document.getElementById('modalTitle').textContent = title
+            document.getElementById('modalNote').value = ''
+            new bootstrap.Modal(document.getElementById('updateModal')).show()
+        }
+
+        async function submitUpdate() {
+            const status = document.getElementById('modalStatus').value
+            const note = document.getElementById('modalNote').value
+
+            try {
+                const res = await fetch(`/api/repairs/${currentId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status, note })
+                })
+                const data = await res.json()
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('updateModal')).hide()
+                    await loadRepairs()
+                } else {
+                    alert('❌ ' + data.error)
+                }
+            } catch (err) {
+                alert('❌ เกิดข้อผิดพลาด')
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            window.location.href = '/login.html'
+        }
+
+        loadRepairs()
+    </script>
+</body>
+
+</html>
