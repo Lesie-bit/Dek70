@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <script>
+    const _user = JSON.parse(localStorage.getItem('user'))
+    if (!_user || _user.role !== 'admin') {
+      window.location.href = '/login.html'
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - ระบบแจ้งซ่อมบำรุง</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+    .stat-card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .badge-pending { background-color: #3b7ddd; }
+    .badge-in_progress { background-color: #fc931d; }
+    .badge-done { background-color: #37b762; }
+    .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; }
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  <nav class="navbar navbar-dark bg-dark py-3">
+    <div class="container px-4 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <div class="bg-warning text-dark d-flex align-items-center justify-content-center rounded-circle" style="width:40px;height:40px;">
+          <i class="bi bi-shield-fill"></i>
+        </div>
+        <span class="fw-bold text-white">Admin Dashboard</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-white"><i class="bi bi-person-circle me-1"></i><span id="adminName"></span></span>
+        <button onclick="logout()" class="btn btn-outline-light btn-sm">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container px-4 mt-4 flex-grow-1">
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card stat-card p-3 text-white" style="background:#3b7ddd">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="mb-0 small">คำขอทั้งหมด</p>
+              <h2 class="fw-bold mb-0" id="statTotal">-</h2>
+            </div>
+            <i class="bi bi-file-earmark-text fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card stat-card p-3 text-white" style="background:#6c757d">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="mb-0 small">รอรับเรื่อง</p>
+              <h2 class="fw-bold mb-0" id="statPending">-</h2>
+            </div>
+            <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card stat-card p-3 text-white" style="background:#fc931d">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="mb-0 small">กำลังดำเนินการ</p>
+              <h2 class="fw-bold mb-0" id="statInProgress">-</h2>
+            </div>
+            <i class="bi bi-wrench fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card stat-card p-3 text-white" style="background:#37b762">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="mb-0 small">เสร็จแล้ว</p>
+              <h2 class="fw-bold mb-0" id="statDone">-</h2>
+            </div>
+            <i class="bi bi-check-circle fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" id="adminTabs">
+      <li class="nav-item">
+        <button class="nav-link active" onclick="showTab('repairs', this)">
+          <i class="bi bi-list-ul me-1"></i>คำขอทั้งหมด
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" onclick="showTab('users', this)">
+          <i class="bi bi-people me-1"></i>จัดการ User
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab: Repairs -->
+    <div id="tab-repairs">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">วันที่</th>
+                  <th>ผู้แจ้ง</th>
+                  <th>สถานที่</th>
+                  <th>ปัญหา</th>
+                  <th>ช่างผู้รับ</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="repairsBody">
+                <tr><td colspan="6" class="text-center py-4">
+                  <div class="spinner-border text-primary"></div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Users -->
+    <div id="tab-users" style="display:none">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">ชื่อ</th>
+                  <th>อีเมล</th>
+                  <th>Role</th>
+                  <th>วันที่สมัคร</th>
+                  <th class="text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody">
+                <tr><td colspan="5" class="text-center py-4">
+                  <div class="spinner-border text-primary"></div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="bg-white border-top py-3 mt-5">
+    <div class="container px-4 text-center text-secondary">
+      <small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม</small>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const token = localStorage.getItem('token')
+    const currentUser = JSON.parse(localStorage.getItem('user'))
+    document.getElementById('adminName').textContent = currentUser?.name || ''
+
+    const statusLabel = { pending: 'รอรับเรื่อง', in_progress: 'กำลังดำเนินการ', done: 'เสร็จแล้ว' }
+    const statusColor = { pending: 'primary', in_progress: 'warning', done: 'success' }
+    const roleLabel = { student: 'นักเรียน/ครู', technician: 'ช่าง', admin: 'Admin' }
+    const roleColor = { student: 'secondary', technician: 'info', admin: 'warning' }
+
+    // โหลดสถิติ
+    async function loadStats() {
+      const res = await fetch('/api/admin/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      document.getElementById('statTotal').textContent = data.total
+      document.getElementById('statPending').textContent = data.pending
+      document.getElementById('statInProgress').textContent = data.in_progress
+      document.getElementById('statDone').textContent = data.done
+
+      // แสดงคำขอทั้งหมดใน tab repairs
+      loadRepairs()
+    }
+
+    // โหลดคำขอทั้งหมด
+    async function loadRepairs() {
+      const res = await fetch('/api/repairs?all=true', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      const tbody = document.getElementById('repairsBody')
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่มีคำขอ</td></tr>'
+        return
+      }
+
+      tbody.innerHTML = data.map(r => {
+        const date = new Date(r.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
+        return `
+        <tr>
+          <td class="ps-4"><small>${date}</small></td>
+          <td>${r.reporter_name}</td>
+          <td><small>${r.location_building} ${r.location_detail || ''}</small></td>
+          <td><small>${r.description?.substring(0, 50)}${r.description?.length > 50 ? '...' : ''}</small></td>
+          <td><small>${r.assigned_to || '<span class="text-muted">ยังไม่ได้รับ</span>'}</small></td>
+          <td><span class="badge bg-${statusColor[r.status]} rounded-pill px-3">${statusLabel[r.status]}</span></td>
+        </tr>`
+      }).join('')
+    }
+
+    // โหลด users
+    async function loadUsers() {
+      const res = await fetch('/api/admin/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      const tbody = document.getElementById('usersBody')
+
+      tbody.innerHTML = data.map(u => `
+      <tr>
+        <td class="ps-4 fw-semibold">${u.name}</td>
+        <td><small>${u.email}</small></td>
+        <td>
+          <span class="badge bg-${roleColor[u.role]} text-dark rounded-pill px-3">${roleLabel[u.role]}</span>
+        </td>
+        <td><small>${new Date(u.created_at).toLocaleDateString('th-TH')}</small></td>
+        <td class="text-center">
+          <select class="form-select form-select-sm d-inline-block w-auto me-1"
+            onchange="changeRole('${u._id}', this.value)">
+            <option value="student" ${u.role === 'student' ? 'selected' : ''}>นักเรียน/ครู</option>
+            <option value="technician" ${u.role === 'technician' ? 'selected' : ''}>ช่าง</option>
+            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.name}')">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>`).join('')
+    }
+
+    async function changeRole(userId, role) {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId, role })
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert('✅ เปลี่ยน role สำเร็จ')
+      } else {
+        alert('❌ ' + data.error)
+      }
+    }
+
+    async function deleteUser(userId, name) {
+      if (!confirm(`ลบ user "${name}" ออกจากระบบ?`)) return
+      const res = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      })
+      const data = await res.json()
+      if (data.success) {
+        loadUsers()
+      }
+    }
+
+    function showTab(tab, btn) {
+      document.getElementById('tab-repairs').style.display = 'none'
+      document.getElementById('tab-users').style.display = 'none'
+      document.getElementById('tab-' + tab).style.display = 'block'
+      document.querySelectorAll('#adminTabs .nav-link').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+
+      if (tab === 'users') loadUsers()
+    }
+
+    function logout() {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login.html'
+    }
+
+    loadStats()
+  </script>
+</body>
+</html>
