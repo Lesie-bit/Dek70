@@ -1,3 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'login.html'
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ติดตามผลการแจ้งซ่อม - โรงเรียนสรรพวิทยาคม</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="university-theme.css" rel="stylesheet">
     <style>
+        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; }
+        .bg-school { background-color: #f1f8fc; }
+        .text-school-primary { color: #007bff; }
+        .card-header-custom { background-color: #d8ecf9; border-bottom: 2px solid #e0e0e0; }
+        .repair-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-school shadow-sm">
+        <div class="container">
+            <a class="navbar-brand text-school-primary" href="#">
+                <i class="fa-solid fa-school me-2"></i>ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">หน้าหลัก</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5 flex-grow-1">
+        <div class="card shadow">
+            <div class="card-header card-header-custom text-school-primary p-3">
+                <h4 class="mb-0"><i class="fa-solid fa-list-check me-2"></i>ติดตามสถานะการแจ้งซ่อมของฉัน</h4>
+            </div>
+            <div class="card-body p-4">
+
+                <div class="row mb-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                            </span>
+                            <input type="text" id="searchInput" class="form-control"
+                                placeholder="ค้นหาอาคาร หรือรายละเอียด..."
+                                oninput="filterData(this.value)">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loadingMsg" class="text-center py-4 text-muted">
+                    <div class="spinner-border text-primary mb-2"></div>
+                    <p>กำลังโหลดข้อมูล...</p>
+                </div>
+
+                <div class="table-responsive" id="tableWrapper" style="display:none">
+                    <table class="table table-hover align-middle border">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%">วันที่แจ้ง</th>
+                                <th style="width: 20%">อาคาร/ห้อง</th>
+                                <th style="width: 20%">ปัญหาที่แจ้ง</th>
+                                <th style="width: 10%">รูปภาพ</th>
+                                <th style="width: 15%">ช่างผู้รับผิดชอบ</th>
+                                <th style="width: 10%">หมายเหตุ</th>
+                                <th style="width: 10%">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="repairTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="emptyMsg" class="text-center py-4 text-muted" style="display:none">
+                    <i class="fa-solid fa-inbox fa-2x mb-2"></i>
+                    <p>ยังไม่มีคำขอแจ้งซ่อม</p>
+                    <a href="request.html" class="btn btn-primary btn-sm">แจ้งซ่อมตอนนี้</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ดูรูปใหญ่ -->
+    <div class="modal fade" id="imgModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0">
+                <div class="modal-body p-0 text-center bg-dark">
+                    <img id="imgModalSrc" src="" class="img-fluid" style="max-height:80vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-top py-4 mt-5">
+        <div class="container px-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-secondary">
+                <div><small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียน. All rights reserved.</small></div>
+                <div><small>พัฒนาโดย <span class="fw-bold text-dark">นักเรียนชั้น ม.6</span> | โปรเจ็กต์จบการศึกษา</small></div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token')
+        let allData = []
+
+        const statusLabel = { pending: 'รอรับเรื่อง', in_progress: 'กำลังดำเนินการ', done: 'เสร็จแล้ว' }
+        const statusColor = { pending: 'primary', in_progress: 'warning', done: 'success' }
+
+        async function fetchRepairs() {
+            try {
+                const res = await fetch('/api/repairs', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                allData = await res.json()
+                document.getElementById('loadingMsg').style.display = 'none'
+
+                if (allData.length === 0) {
+                    document.getElementById('emptyMsg').style.display = 'block'
+                } else {
+                    document.getElementById('tableWrapper').style.display = 'block'
+                    renderTable(allData)
+                }
+            } catch (err) {
+                document.getElementById('loadingMsg').innerHTML = '<p class="text-danger">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่</p>'
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('repairTableBody')
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบข้อมูลที่ค้นหา</td></tr>`
+                return
+            }
+
+            tbody.innerHTML = data.map(r => {
+                const date = new Date(r.created_at).toLocaleDateString('th-TH', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                })
+                const imgHtml = r.image_url
+                    ? `<img src="${r.image_url}" class="repair-img" onclick="showImg('${r.image_url}')">`
+                    : '<span class="text-muted small">ไม่มีรูป</span>'
+                const assignedHtml = r.assigned_to
+                    ? r.assigned_to
+                    : '<span class="text-muted">ยังไม่ได้รับมอบหมาย</span>'
+                const noteHtml = r.note
+                    ? r.note
+                    : '<span class="text-muted">-</span>'
+
+                return `
+                <tr>
+                    <td>${date}</td>
+                    <td>
+                        <span class="fw-semibold">${r.location_building}</span>
+                        <small class="text-muted d-block">${r.location_detail || ''}</small>
+                    </td>
+                    <td>
+                        <span class="fw-semibold">${r.category || ''}</span>
+                        <small class="text-muted d-block">${r.description}</small>
+                    </td>
+                    <td>${imgHtml}</td>
+                    <td>${assignedHtml}</td>
+                    <td><small>${noteHtml}</small></td>
+                    <td>
+                        <span class="badge bg-${statusColor[r.status] || 'secondary'} px-3 py-2 rounded-pill">
+                            ${statusLabel[r.status] || r.status}
+                        </span>
+                    </td>
+                </tr>`
+            }).join('')
+        }
+
+        function filterData(keyword) {
+            const kw = keyword.toLowerCase()
+            const filtered = allData.filter(r =>
+                r.location_building?.toLowerCase().includes(kw) ||
+                r.description?.toLowerCase().includes(kw) ||
+                r.category?.toLowerCase().includes(kw)
+            )
+            renderTable(filtered)
+        }
+
+        function showImg(url) {
+            document.getElementById('imgModalSrc').src = url
+            new bootstrap.Modal(document.getElementById('imgModal')).show()
+        }
+
+        fetchRepairs()
+    </script>
+</body>
+</html>
