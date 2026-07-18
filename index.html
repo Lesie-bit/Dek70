@@ -137,7 +137,7 @@
         // โหลดสถิติของตัวเองจาก API
         async function loadStats() {
             try {
-                const res = await fetch('/api/admin/stats', {
+                const res = await fetch('/api/stats', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 const data = await res.json()
