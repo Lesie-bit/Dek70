@@ -1,115 +1,101 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <script>
         const user = JSON.parse(localStorage.getItem('user'))
-        if (!user || user.role !== 'technician') {
-            window.location.href = '/login.html'
-        }
+        if (!user || user.role !== 'technician') { window.location.href = '/login.html' }
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>หน้าช่าง - ระบบแจ้งซ่อมบำรุง</title>
+    <title>หน้าช่าง - ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f4f6f9;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .badge-pending {
-            background-color: #3b7ddd;
-        }
-
-        .badge-in_progress {
-            background-color: #fc931d;
-        }
-
-        .badge-done {
-            background-color: #37b762;
-        }
-
-        .card-repair {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-            margin-bottom: 16px;
-        }
-
-        .repair-img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .map-mini {
-            position: relative;
-            display: inline-block;
-        }
-
-        .map-mini img {
-            width: 160px;
-            border-radius: 6px;
-        }
-
-        .map-pin-mini {
-            position: absolute;
-            font-size: 1.2rem;
-            transform: translate(-50%, -100%);
-            pointer-events: none;
-        }
+        :root { --navy: #1B3A6B; --navy-mid: #2D5F8A; --navy-light: #4A90C4; --navy-pale: #E8F0F8; --gold: #C9922A; }
+        body { background-color: #F0F4F8; font-family: 'Segoe UI', 'Sarabun', sans-serif; }
+        .navbar-main { background: var(--navy); border-bottom: 3px solid var(--gold); }
+        .repair-card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(27,58,107,0.08); margin-bottom: 16px; transition: transform 0.15s; border-left: 4px solid transparent; }
+        .repair-card:hover { transform: translateY(-2px); }
+        .repair-card[data-status="pending"] { border-left-color: #1B3A6B; }
+        .repair-card[data-status="in_progress"] { border-left-color: #C9922A; }
+        .repair-card[data-status="done"] { border-left-color: #2E7D52; opacity: 0.8; }
+        .status-pill { font-size: 0.78rem; font-weight: 600; padding: 5px 14px; border-radius: 20px; }
+        .status-pending { background: #E8F0F8; color: #1B3A6B; }
+        .status-in_progress { background: #FEF3E2; color: #C9922A; }
+        .status-done { background: #E6F4EC; color: #2E7D52; }
+        .cat-badge { font-size: 0.75rem; background: var(--navy-pale); color: var(--navy); padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+        .repair-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #D1DCE8; }
+        .filter-btn { border-radius: 20px; font-size: 0.85rem; }
+        .btn-navy { background: var(--navy); color: white; border: none; }
+        .btn-navy:hover { background: var(--navy-mid); color: white; }
+        .modal-header-navy { background: var(--navy); color: white; border-bottom: 3px solid var(--gold); }
+        footer { background: var(--navy); color: rgba(255,255,255,0.6); }
     </style>
 </head>
-
 <body class="d-flex flex-column min-vh-100">
-
-    <nav class="navbar navbar-dark bg-dark py-3">
+    <nav class="navbar navbar-main py-3">
         <div class="container px-4 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
-                <div class="bg-primary text-white d-flex align-items-center justify-content-center rounded-circle"
-                    style="width:40px;height:40px;">
-                    <i class="bi bi-tools"></i>
+                <div class="bg-gold text-white rounded-circle d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:rgba(201,146,42,0.2)">
+                    <i class="bi bi-wrench-adjustable text-warning fs-5"></i>
                 </div>
-                <span class="fw-bold text-white">หน้าช่างซ่อมบำรุง</span>
+                <div>
+                    <span class="fw-bold text-white d-block">หน้าช่างซ่อมบำรุง</span>
+                    <small class="text-white-50">โรงเรียนสรรพวิทยาคม</small>
+                </div>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <span class="text-white"><i class="bi bi-person-circle me-1"></i><span id="techName"></span></span>
+                <span class="text-white small"><i class="bi bi-person-circle me-1"></i><span id="techName"></span></span>
                 <button onclick="logout()" class="btn btn-outline-light btn-sm">ออกจากระบบ</button>
             </div>
         </div>
     </nav>
 
     <div class="container px-4 mt-4 flex-grow-1">
+        <!-- Summary -->
+        <div class="row g-3 mb-4">
+            <div class="col-4">
+                <div class="card border-0 rounded-3 p-3 text-center" style="background:#E8F0F8">
+                    <h3 class="fw-bold mb-0" id="cntPending" style="color:#1B3A6B">-</h3>
+                    <small class="text-muted">รอรับเรื่อง</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card border-0 rounded-3 p-3 text-center" style="background:#FEF3E2">
+                    <h3 class="fw-bold mb-0" id="cntInProgress" style="color:#C9922A">-</h3>
+                    <small class="text-muted">กำลังทำ</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card border-0 rounded-3 p-3 text-center" style="background:#E6F4EC">
+                    <h3 class="fw-bold mb-0" id="cntDone" style="color:#2E7D52">-</h3>
+                    <small class="text-muted">เสร็จแล้ว</small>
+                </div>
+            </div>
+        </div>
 
-        <!-- filter tabs -->
+        <!-- Filter -->
         <div class="d-flex gap-2 mb-4 flex-wrap">
-            <button class="btn btn-primary btn-sm active" onclick="filterStatus('all', this)">ทั้งหมด</button>
-            <button class="btn btn-outline-primary btn-sm" onclick="filterStatus('pending', this)">รอรับเรื่อง</button>
-            <button class="btn btn-outline-warning btn-sm"
-                onclick="filterStatus('in_progress', this)">กำลังดำเนินการ</button>
-            <button class="btn btn-outline-success btn-sm" onclick="filterStatus('done', this)">เสร็จแล้ว</button>
+            <button class="btn btn-navy filter-btn" onclick="filterStatus('all', this)">ทั้งหมด</button>
+            <button class="btn btn-outline-secondary filter-btn" onclick="filterStatus('pending', this)">รอรับเรื่อง</button>
+            <button class="btn btn-outline-secondary filter-btn" onclick="filterStatus('in_progress', this)">กำลังดำเนินการ</button>
+            <button class="btn btn-outline-secondary filter-btn" onclick="filterStatus('done', this)">เสร็จแล้ว</button>
         </div>
 
-        <div id="loadingMsg" class="text-center text-muted py-5">
-            <div class="spinner-border text-primary mb-3"></div>
-            <p>กำลังโหลดข้อมูล...</p>
+        <div id="loadingMsg" class="text-center py-5 text-muted">
+            <div class="spinner-border mb-2" style="color:#1B3A6B"></div>
+            <p class="mb-0">กำลังโหลดข้อมูล...</p>
         </div>
-
         <div id="repairList"></div>
-
     </div>
 
-    <footer class="bg-white border-top py-3 mt-5">
-        <div class="container px-4 text-center text-secondary">
-            <small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม</small>
+    <footer class="py-4 mt-5">
+        <div class="container px-4 text-center">
+            <small>© 2026 ระบบแจ้งซ่อมบำรุง โรงเรียนสรรพวิทยาคม</small>
         </div>
     </footer>
 
-    <!-- Modal ดูรูปใหญ่ -->
+    <!-- Modal รูป -->
     <div class="modal fade" id="imgModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0">
@@ -120,32 +106,35 @@
         </div>
     </div>
 
-    <!-- Modal อัปเดตสถานะ -->
+    <!-- Modal อัปเดต -->
     <div class="modal fade" id="updateModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title">อัปเดตสถานะงาน</h5>
+                <div class="modal-header modal-header-navy">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>อัปเดตสถานะงาน</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <p class="text-muted mb-3" id="modalTitle"></p>
+                    <div class="bg-light rounded p-3 mb-3 border-start border-4" style="border-color:#1B3A6B !important">
+                        <p class="mb-0 fw-semibold" id="modalTitle"></p>
+                    </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">สถานะ</label>
+                        <label class="form-label fw-semibold">สถานะ</label>
                         <select class="form-select" id="modalStatus">
-                            <option value="in_progress">กำลังดำเนินการ (รับงาน)</option>
-                            <option value="done">เสร็จแล้ว</option>
+                            <option value="in_progress">🔧 กำลังดำเนินการ (รับงาน)</option>
+                            <option value="done">✅ เสร็จแล้ว</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">หมายเหตุ</label>
-                        <textarea class="form-control" id="modalNote" rows="3"
-                            placeholder="บันทึกความคืบหน้า..."></textarea>
+                        <label class="form-label fw-semibold">หมายเหตุ/บันทึกผล</label>
+                        <textarea class="form-control" id="modalNote" rows="3" placeholder="เช่น สั่งอะไหล่เพิ่ม, ดำเนินการแล้วเสร็จ..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-success px-4" onclick="submitUpdate()">บันทึก</button>
+                    <button type="button" class="btn btn-navy px-4" onclick="submitUpdate()">
+                        <i class="bi bi-check-lg me-1"></i>บันทึก
+                    </button>
                 </div>
             </div>
         </div>
@@ -156,100 +145,75 @@
         const token = localStorage.getItem('token')
         let allRepairs = []
         let currentId = null
-        let currentFilter = 'all'
 
         document.getElementById('techName').textContent = user?.name || ''
 
-        // โหลดข้อมูลทั้งหมด
         async function loadRepairs() {
             try {
-                const res = await fetch('/api/repairs?all=true', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
+                const res = await fetch('/api/repairs?all=true', { headers: { 'Authorization': `Bearer ${token}` } })
                 allRepairs = await res.json()
                 document.getElementById('loadingMsg').style.display = 'none'
+
+                // update summary counts
+                document.getElementById('cntPending').textContent = allRepairs.filter(r => r.status === 'pending').length
+                document.getElementById('cntInProgress').textContent = allRepairs.filter(r => r.status === 'in_progress').length
+                document.getElementById('cntDone').textContent = allRepairs.filter(r => r.status === 'done').length
+
                 renderList(allRepairs)
-            } catch (err) {
+            } catch {
                 document.getElementById('loadingMsg').innerHTML = '<p class="text-danger">โหลดข้อมูลไม่สำเร็จ</p>'
             }
         }
 
         function renderList(repairs) {
             const list = document.getElementById('repairList')
-            if (repairs.length === 0) {
-                list.innerHTML = '<div class="text-center text-muted py-5">ไม่มีคำขอในขณะนี้</div>'
+            if (!repairs.length) {
+                list.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>ไม่มีคำขอในขณะนี้</div>'
                 return
             }
-
             list.innerHTML = repairs.map(r => {
-                const date = new Date(r.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
+                const date = new Date(r.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
                 const statusLabel = { pending: 'รอรับเรื่อง', in_progress: 'กำลังดำเนินการ', done: 'เสร็จแล้ว' }
-                const statusClass = { pending: 'badge-pending', in_progress: 'badge-in_progress', done: 'badge-done' }
-
-                const imgHtml = r.image_url
-                    ? `<img src="${r.image_url}" class="repair-img me-2" onclick="showImg('${r.image_url}')">`
-                    : ''
-
-                const mapHtml = r.pin_x && r.pin_y
-                    ? `<div class="map-mini mt-2">
-              <img src="https://res.cloudinary.com/daezwgbv/image/upload/v1783748805/sappha-re100_2569-2048x2048_1_wvsbte.jpg">
-              <span class="map-pin-mini" style="left:${r.pin_x}%;top:${r.pin_y}%">📍</span>
-             </div>`
-                    : ''
-
-                const assignedHtml = r.assigned_to
-                    ? `<small class="text-muted">ช่างผู้รับผิดชอบ: <strong>${r.assigned_to}</strong></small><br>`
-                    : ''
-
-                const noteHtml = r.note
-                    ? `<small class="text-muted">หมายเหตุ: ${r.note}</small><br>`
-                    : ''
-
+                const statusCls = { pending: 'status-pending', in_progress: 'status-in_progress', done: 'status-done' }
+                const imgHtml = r.image_url ? `<img src="${r.image_url}" class="repair-img me-2" onclick="showImg('${r.image_url}')">` : ''
+                const assignedHtml = r.assigned_to ? `<small class="text-muted"><i class="bi bi-person-check me-1"></i>ช่างผู้รับ: <strong>${r.assigned_to}</strong></small><br>` : ''
+                const noteHtml = r.note ? `<small class="text-muted"><i class="bi bi-chat-text me-1"></i>${r.note}</small><br>` : ''
+                const catBadge = r.sub_category
+                    ? `<span class="cat-badge">${r.category}</span> <small class="text-muted">› ${r.sub_category}</small>`
+                    : `<span class="cat-badge">${r.category || ''}</span>`
                 const btnHtml = r.status !== 'done'
-                    ? `<button class="btn btn-primary btn-sm mt-2" onclick="openUpdate('${r._id}', '${r.title}')">
-              <i class="bi bi-pencil-square me-1"></i>อัปเดตสถานะ
-             </button>`
-                    : `<span class="badge bg-success mt-2">✅ เสร็จแล้ว</span>`
+                    ? `<button class="btn btn-navy btn-sm mt-2" onclick="openUpdate('${r._id}', '${r.title}')"><i class="bi bi-pencil-square me-1"></i>อัปเดตสถานะ</button>`
+                    : `<span class="status-pill status-done mt-2 d-inline-block">✅ เสร็จแล้ว</span>`
 
-                return `
-        <div class="card card-repair" data-status="${r.status}">
-          <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="fw-bold mb-0">${r.title}</h5>
-              <span class="badge ${statusClass[r.status]} rounded-pill px-3 py-2">${statusLabel[r.status]}</span>
-            </div>
-            <div class="text-muted small mb-2">
-              <i class="bi bi-geo-alt me-1"></i>${r.location_building} ${r.location_detail || ''}
-              &nbsp;|&nbsp;
-              <i class="bi bi-calendar me-1"></i>${date}
-              &nbsp;|&nbsp;
-              <i class="bi bi-person me-1"></i>${r.reporter_name}
-                ${r.contact_number ? `&nbsp;|&nbsp;<i class="bi bi-telephone me-1"></i>${r.contact_number}` : ''}
-            </div>
-            <p class="mb-2">${r.description}</p>
-            ${assignedHtml}
-            ${noteHtml}
-            <div class="d-flex align-items-start gap-2 flex-wrap">
-              ${imgHtml}
-              ${mapHtml}
-            </div>
-            ${btnHtml}
-          </div>
-        </div>`
+                return `<div class="card repair-card" data-status="${r.status}">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="fw-bold mb-1">${r.title}</h6>
+                                <div class="mb-1">${catBadge}</div>
+                            </div>
+                            <span class="status-pill ${statusCls[r.status]}">${statusLabel[r.status]}</span>
+                        </div>
+                        <div class="text-muted small mb-2">
+                            <i class="bi bi-geo-alt me-1"></i>${r.location_building} ${r.location_detail || ''}
+                            &nbsp;·&nbsp;<i class="bi bi-calendar me-1"></i>${date}
+                            &nbsp;·&nbsp;<i class="bi bi-person me-1"></i>${r.reporter_name}
+                            ${r.contact_number ? `&nbsp;·&nbsp;<i class="bi bi-telephone me-1"></i>${r.contact_number}` : ''}
+                        </div>
+                        <p class="mb-2 small">${r.description}</p>
+                        ${assignedHtml}${noteHtml}
+                        <div class="d-flex align-items-start gap-2 flex-wrap mt-2">${imgHtml}</div>
+                        ${btnHtml}
+                    </div>
+                </div>`
             }).join('')
         }
 
         function filterStatus(status, btn) {
-            currentFilter = status
-            document.querySelectorAll('.btn-group-filter .btn, .d-flex.gap-2.mb-4 .btn').forEach(b => {
-                b.classList.remove('active', 'btn-primary', 'btn-warning', 'btn-success')
-                b.classList.add(b.getAttribute('onclick').includes('pending') ? 'btn-outline-primary'
-                    : b.getAttribute('onclick').includes('in_progress') ? 'btn-outline-warning'
-                        : b.getAttribute('onclick').includes('done') ? 'btn-outline-success'
-                            : 'btn-outline-primary')
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.className = 'btn btn-outline-secondary filter-btn'
             })
-            btn.classList.add('active')
-
+            btn.className = 'btn btn-navy filter-btn'
             const filtered = status === 'all' ? allRepairs : allRepairs.filter(r => r.status === status)
             renderList(filtered)
         }
@@ -269,26 +233,18 @@
         async function submitUpdate() {
             const status = document.getElementById('modalStatus').value
             const note = document.getElementById('modalNote').value
-
             try {
                 const res = await fetch(`/api/repairs/${currentId}`, {
                     method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ status, note })
                 })
                 const data = await res.json()
                 if (data.success) {
                     bootstrap.Modal.getInstance(document.getElementById('updateModal')).hide()
                     await loadRepairs()
-                } else {
-                    alert('❌ ' + data.error)
-                }
-            } catch (err) {
-                alert('❌ เกิดข้อผิดพลาด')
-            }
+                } else { alert('❌ ' + data.error) }
+            } catch { alert('❌ เกิดข้อผิดพลาด') }
         }
 
         function logout() {
@@ -300,5 +256,4 @@
         loadRepairs()
     </script>
 </body>
-
 </html>

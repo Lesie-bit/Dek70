@@ -1,159 +1,229 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <script>
         const token = localStorage.getItem('token')
-        if (!token) {
-            window.location.href = '/login.html'
-        }
+        if (!token) { window.location.href = '/login.html' }
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPS Maintenance Request - โรงเรียนสรรพวิทยาคม</title>
+    <title>แจ้งซ่อมบำรุง - โรงเรียนสรรพวิทยาคม</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #f4f6f9;
-        }
-
-        .bg-school {
-            background-color: #f1f8fc;
-        }
-
-        .text-school-primary {
-            color: #007bff;
-        }
-
-        .card-header-custom {
-            background-color: #d8ecf9;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        form label {
-            font-weight: 500;
-        }
-        /* Photo preview */
-        #uploadPreview {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            display: none;
-            margin-top: 10px;
-        }
+        :root { --navy: #1B3A6B; --navy-mid: #2D5F8A; --navy-light: #4A90C4; --navy-pale: #E8F0F8; --gold: #C9922A; }
+        body { background-color: #F0F4F8; font-family: 'Segoe UI', 'Sarabun', sans-serif; }
+        .navbar-main { background: var(--navy); }
+        .navbar-main .navbar-brand, .navbar-main a { color: white !important; }
+        .page-header { background: linear-gradient(90deg, var(--navy) 0%, var(--navy-mid) 100%); color: white; padding: 1.5rem 0; border-bottom: 4px solid var(--gold); }
+        .form-card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(27,58,107,0.08); }
+        .section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--navy); border-left: 3px solid var(--gold); padding-left: 10px; margin-bottom: 1rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(74,144,196,0.15); }
+        .form-label { font-weight: 600; color: #374151; font-size: 0.9rem; }
+        /* Category cards */
+        .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media(min-width:576px) { .category-grid { grid-template-columns: repeat(4, 1fr); } }
+        .cat-card { border: 2px solid #D1DCE8; border-radius: 10px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s; background: white; }
+        .cat-card:hover { border-color: var(--navy-light); background: var(--navy-pale); }
+        .cat-card.active { border-color: var(--navy); background: var(--navy); color: white; }
+        .cat-card .cat-icon { font-size: 1.8rem; display: block; margin-bottom: 6px; }
+        .cat-card .cat-label { font-size: 0.85rem; font-weight: 600; }
+        /* Sub-category */
+        .subcategory-section { display: none; }
+        .subcategory-section.show { display: block; }
+        .sub-option { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #D1DCE8; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.875rem; margin: 4px; transition: all 0.15s; background: white; }
+        .sub-option:hover { border-color: var(--navy-light); background: var(--navy-pale); }
+        .sub-option.active { border-color: var(--navy); background: var(--navy); color: white; }
+        .btn-navy { background: var(--navy); color: white; border: none; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
+        .btn-navy:hover { background: var(--navy-mid); color: white; }
+        .btn-navy:disabled { background: #8899BB; color: white; }
+        #uploadPreview { max-width: 100%; max-height: 200px; border-radius: 8px; display: none; margin-top: 10px; }
+        footer { background: var(--navy); color: rgba(255,255,255,0.6); }
     </style>
 </head>
-
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-school shadow-sm">
-        <div class="container">
-            <a class="navbar-brand text-school-primary" href="#">
-                <i class="fa-solid fa-school me-2"></i> ระบบแจ้งซ่อมบำรุงโรงเรียนสรรพวิทยาคม
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-main py-3">
+        <div class="container px-4 d-flex justify-content-between align-items-center">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-white text-decoration-none" href="#">
+                <i class="bi bi-tools"></i> ระบบแจ้งซ่อมบำรุง
             </a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="index.html">หน้าหลัก</a>
-                    </li>
-                </ul>
-            </div>
+            <a href="index.html" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-house me-1"></i>หน้าหลัก
+            </a>
         </div>
     </nav>
 
-    <div class="container my-5">
+    <div class="page-header">
+        <div class="container px-4">
+            <h5 class="fw-bold mb-0"><i class="bi bi-send me-2"></i>ส่งคำร้องแจ้งซ่อมใหม่</h5>
+        </div>
+    </div>
+
+    <div class="container px-4 my-4 flex-grow-1">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="card shadow">
-                    <div class="card-header card-header-custom text-school-primary">
-                        <h4 class="mb-0"><i class="fa-regular fa-paper-plane me-2"></i>ส่งคำร้องแจ้งซ่อมใหม่</h4>
-                    </div>
+                <div class="card form-card">
                     <div class="card-body p-4">
-                        <p class="text-muted mb-4">กรุณากรอกข้อมูลเพื่อแจ้งซ่อมบำรุง หากมีรูปภาพโปรดแนบมาด้วย</p>
 
                         <form id="repairRequestForm">
-                            <div class="mb-3 row">
-                                <label class="col-sm-3 col-form-label">วันที่แจ้ง</label>
-                                <div class="col-sm-9">
+                            <!-- ข้อมูลผู้แจ้ง -->
+                            <div class="section-title">ข้อมูลผู้แจ้ง</div>
+                            <div class="row mb-3">
+                                <div class="col-md-4 mb-3 mb-md-0">
+                                    <label class="form-label">วันที่แจ้ง</label>
                                     <input type="text" class="form-control" id="reportDate" readonly>
                                 </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4 mb-3 mb-md-0">
                                     <label class="form-label">ชื่อผู้แจ้ง</label>
-                                    <input type="text" class="form-control" id="reporterName"
-                                        placeholder="เช่น นายสมชาย สมบัติ">
+                                    <input type="text" class="form-control" id="reporterName" placeholder="ชื่อ-นามสกุล">
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">เบอร์ติดต่อกลับ</label>
-                                    <input type="tel" class="form-control" id="contactNumber"
-                                        placeholder="เช่น 0xx-xxxxxxx">
+                                    <input type="tel" class="form-control" id="contactNumber" placeholder="0xx-xxxxxxx">
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">ประเภทงานซ่อม</label>
-                                <select class="form-select" id="repairCategory">
-                                    <option value="" disabled selected>-- เลือกประเภทงาน --</option>
-                                    <option value="ไฟฟ้า">ไฟฟ้า</option>
-                                    <option value="ประปา">ประปา</option>
-                                    <option value="อาคาร">อาคาร</option>
-                                    <option value="คอมพิวเตอร์">คอมพิวเตอร์/IT</option>
-                                </select>
+                            <!-- ประเภทงานซ่อม -->
+                            <div class="section-title mt-4">ประเภทงานซ่อม</div>
+                            <div class="category-grid mb-3" id="categoryGrid">
+                                <div class="cat-card" onclick="selectCategory('ไฟฟ้า', this)">
+                                    <span class="cat-icon">⚡</span>
+                                    <span class="cat-label">ไฟฟ้า</span>
+                                </div>
+                                <div class="cat-card" onclick="selectCategory('ประปา', this)">
+                                    <span class="cat-icon">🚿</span>
+                                    <span class="cat-label">ประปา</span>
+                                </div>
+                                <div class="cat-card" onclick="selectCategory('อาคาร', this)">
+                                    <span class="cat-icon">🏫</span>
+                                    <span class="cat-label">อาคาร/สิ่งก่อสร้าง</span>
+                                </div>
+                                <div class="cat-card" onclick="selectCategory('คอมพิวเตอร์', this)">
+                                    <span class="cat-icon">💻</span>
+                                    <span class="cat-label">คอมพิวเตอร์/IT</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="repairCategory">
+
+                            <!-- หัวข้อย่อย ไฟฟ้า -->
+                            <div class="subcategory-section mb-3" id="sub-ไฟฟ้า">
+                                <label class="form-label">ระบุปัญหาไฟฟ้า</label>
+                                <div>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-lightbulb"></i>ไฟดับ/ไฟไม่ติด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-exclamation-triangle"></i>ไฟฟ้าช็อต/ลัดวงจร</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-plug"></i>ปลั๊กไฟชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-fan"></i>พัดลม/แอร์ชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-camera-video"></i>กล้องวงจรปิดเสีย</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-soundwave"></i>ระบบเสียง/ไมโครโฟน</span>
+                                    <span class="sub-option" onclick="selectSub(this)">อื่นๆ (ระบุในรายละเอียด)</span>
+                                </div>
                             </div>
 
+                            <!-- หัวข้อย่อย ประปา -->
+                            <div class="subcategory-section mb-3" id="sub-ประปา">
+                                <label class="form-label">ระบุปัญหาประปา</label>
+                                <div>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-droplet"></i>น้ำไม่ไหล</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-water"></i>ท่อแตก/น้ำรั่ว</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-bucket"></i>อ่างล้างมือชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-toilet"></i>ชักโครก/โถส้วมชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-thermometer-sun"></i>เครื่องทำน้ำอุ่นเสีย</span>
+                                    <span class="sub-option" onclick="selectSub(this)">อื่นๆ (ระบุในรายละเอียด)</span>
+                                </div>
+                            </div>
+
+                            <!-- หัวข้อย่อย อาคาร -->
+                            <div class="subcategory-section mb-3" id="sub-อาคาร">
+                                <label class="form-label">ระบุปัญหาอาคาร/สิ่งก่อสร้าง</label>
+                                <div>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-table"></i>โต๊ะ/เก้าอี้ชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-door-open"></i>ประตูชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-window"></i>หน้าต่างชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-columns-gap"></i>ฝ้าเพดาน/หลังคารั่ว</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-bricks"></i>ผนัง/พื้นชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-shield-x"></i>รั้ว/ประตูรั้วชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-ladder"></i>บันไดชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)">อื่นๆ (ระบุในรายละเอียด)</span>
+                                </div>
+                            </div>
+
+                            <!-- หัวข้อย่อย คอมพิวเตอร์ -->
+                            <div class="subcategory-section mb-3" id="sub-คอมพิวเตอร์">
+                                <label class="form-label">ระบุปัญหาคอมพิวเตอร์/IT</label>
+                                <div>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-pc-display"></i>คอมพิวเตอร์เปิดไม่ติด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-display"></i>จอภาพชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-keyboard"></i>คีย์บอร์ด/เมาส์เสีย</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-wifi-off"></i>อินเทอร์เน็ตไม่ได้</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-printer"></i>เครื่องพิมพ์ชำรุด</span>
+                                    <span class="sub-option" onclick="selectSub(this)"><i class="bi bi-projector"></i>โปรเจกเตอร์เสีย</span>
+                                    <span class="sub-option" onclick="selectSub(this)">อื่นๆ (ระบุในรายละเอียด)</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="repairSubCategory">
+
+                            <!-- สถานที่ -->
+                            <div class="section-title mt-4">สถานที่ชำรุด</div>
                             <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">อาคาร/สถานที่หลัก</label>
-                                    <select class="form-select" id="locationBuilding">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label class="form-label">อาคาร/สถานที่หลัก <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="locationBuilding" required>
                                         <option value="" disabled selected>-- เลือกอาคาร --</option>
-                                        <option value="อาคาร 1 ศรีเมืองฉอด">อาคาร 1 ศรีเมืองฉอด</option>
-                                        <option value="อาคาร 2 ทิวสน">อาคาร 2 ทิวสน</option>
-                                        <option value="อาคาร 3 เพชรประจิม">อาคาร 3 เพชรประจิม</option>
-                                        <option value="อาคาร 4 ขุนสามชน">อาคาร 4 ขุนสามชน</option>
-                                        <option value="อาคาร 5 อัญมณี">อาคาร 5 อัญมณี</option>
-                                        <option value="อาคาร 6 พระวอมิ่งขวัญ">อาคาร 6 พระวอมิ่งขวัญ</option>
-                                        <option value="อาคารอุตสาหกรรม">อาคารอุตสาหกรรม</option>
-                                        <option value="อาคารอเนกประสงค์">อาคารอเนกประสงค์</option>
-                                        <option value="อาคารพยาบาล">อาคารพยาบาล</option>
-                                        <option value="อาคารสรรพการและโรงอาหาร">อาคารสรรพการและโรงอาหาร</option>
-                                        <option value="อาคารโสตทัศนศึกษา">อาคารโสตทัศนศึกษา</option>
-                                        <option value="อาคารเฉลิมพระเกียรติ100ปี">อาคารเฉลิมพระเกียรติ 100 ปี</option>
-                                        <option value="โดมกิจกรรม">โดมกิจกรรม</option>
-                                        <option value="อัฒจันทร์">อัฒจันทร์</option>
-                                        <option value="สนามฟุตบอล">สนามฟุตบอล</option>
-                                        <option value="สนามบาส">สนามบาส</option>
-                                        <option value="ห้องสุขานักเรียน">ห้องสุขานักเรียน</option>
-                                        <option value="ป้อมยาม">ป้อมยาม</option>
-                                        <option value="ห้องสภานักเรียน">ห้องสภานักเรียน</option>
+                                        <optgroup label="อาคารเรียน">
+                                            <option value="อาคาร 1 ศรีเมืองฉอด">อาคาร 1 ศรีเมืองฉอด</option>
+                                            <option value="อาคาร 2 ทิวสน">อาคาร 2 ทิวสน</option>
+                                            <option value="อาคาร 3 เพชรประจิม">อาคาร 3 เพชรประจิม</option>
+                                            <option value="อาคาร 4 ขุนสามชน">อาคาร 4 ขุนสามชน</option>
+                                            <option value="อาคาร 5 อัญมณี">อาคาร 5 อัญมณี</option>
+                                            <option value="อาคาร 6 พระวอมิ่งขวัญ">อาคาร 6 พระวอมิ่งขวัญ</option>
+                                        </optgroup>
+                                        <optgroup label="อาคารพิเศษ">
+                                            <option value="อาคารอุตสาหกรรม">อาคารอุตสาหกรรม</option>
+                                            <option value="อาคารอเนกประสงค์">อาคารอเนกประสงค์</option>
+                                            <option value="อาคารพยาบาล">อาคารพยาบาล</option>
+                                            <option value="อาคารสรรพการและโรงอาหาร">อาคารสรรพการและโรงอาหาร</option>
+                                            <option value="อาคารโสตทัศนศึกษา">อาคารโสตทัศนศึกษา</option>
+                                            <option value="อาคารเฉลิมพระเกียรติ100ปี">อาคารเฉลิมพระเกียรติ 100 ปี</option>
+                                        </optgroup>
+                                        <optgroup label="สิ่งอำนวยความสะดวก">
+                                            <option value="โดมกิจกรรม">โดมกิจกรรม</option>
+                                            <option value="อัฒจันทร์">อัฒจันทร์</option>
+                                            <option value="สนามฟุตบอล">สนามฟุตบอล</option>
+                                            <option value="สนามบาส">สนามบาส</option>
+                                            <option value="ห้องสุขานักเรียน">ห้องสุขานักเรียน</option>
+                                            <option value="ป้อมยาม">ป้อมยาม</option>
+                                            <option value="ห้องสภานักเรียน">ห้องสภานักเรียน</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">ห้อง/ชั้น/จุดสังเกต</label>
-                                    <input type="text" class="form-control" id="locationDetail"
-                                        placeholder="เช่น ห้อง 311, ชั้น 2">
+                                    <input type="text" class="form-control" id="locationDetail" placeholder="เช่น ห้อง 311, ชั้น 2">
                                 </div>
                             </div>
 
+                            <!-- รายละเอียด -->
+                            <div class="section-title mt-4">รายละเอียด</div>
                             <div class="mb-3">
-                                <label class="form-label">รายละเอียดอาการเสีย</label>
-                                <textarea class="form-control" id="repairDescription" rows="5"
-                                    placeholder="กรุณาระบุรายละเอียด เช่น 'แอร์เปิดไม่ติด มีเสียงดัง'"></textarea>
+                                <label class="form-label">รายละเอียดอาการเสีย <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="repairDescription" rows="4" placeholder="อธิบายอาการเสียให้ละเอียด เช่น เกิดเมื่อไหร่ ที่ไหนในห้อง รุนแรงแค่ไหน" required></textarea>
                             </div>
 
+                            <!-- รูปภาพ -->
                             <div class="mb-4">
                                 <label class="form-label">แนบรูปภาพ (ถ้ามี)</label>
                                 <input class="form-control" type="file" id="repairPhoto" accept="image/*">
                                 <img id="uploadPreview" src="" alt="preview">
+                                <small class="text-muted">รูปจะช่วยให้ช่างเข้าใจปัญหาได้ดีขึ้น</small>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-outline-secondary"
-                                    onclick="resetForm()">ยกเลิก</button>
-                                <button type="submit" class="btn btn-primary btn-lg px-5"
-                                    id="submitBtn">ส่งคำร้อง</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>ยกเลิก
+                                </button>
+                                <button type="submit" class="btn btn-navy btn-lg px-5" id="submitBtn">
+                                    <i class="bi bi-send me-2"></i>ส่งคำร้อง
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -162,29 +232,46 @@
         </div>
     </div>
 
-    <footer class="bg-white border-top py-4 mt-5">
-        <div class="container px-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-secondary">
-                <div><small>© 2026 ระบบแจ้งซ่อมบำรุงโรงเรียน. All rights reserved.</small></div>
-                <div><small>พัฒนาโดย <span class="fw-bold text-dark">นักเรียนชั้น ม.6</span> |
-                        โปรเจ็กต์จบการศึกษา</small></div>
-            </div>
+    <footer class="py-4 mt-5">
+        <div class="container px-4 text-center">
+            <small>© 2026 ระบบแจ้งซ่อมบำรุง โรงเรียนสรรพวิทยาคม | พัฒนาโดยนักเรียน ม.6</small>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // กำหนดวันที่อัตโนมัติ
-        document.addEventListener('DOMContentLoaded', function () {
+
+        document.addEventListener('DOMContentLoaded', function() {
             const now = new Date()
-            document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            })
+            document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
             const user = JSON.parse(localStorage.getItem('user'))
             if (user) document.getElementById('reporterName').value = user.name
         })
-        // Preview รูปภาพ
-        document.getElementById('repairPhoto').addEventListener('change', function () {
+
+        // เลือกประเภทหลัก
+        function selectCategory(cat, el) {
+            document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'))
+            el.classList.add('active')
+            document.getElementById('repairCategory').value = cat
+            document.getElementById('repairSubCategory').value = ''
+
+            // ซ่อนทุก sub แล้วแสดงอันที่เลือก
+            document.querySelectorAll('.subcategory-section').forEach(s => s.classList.remove('show'))
+            document.querySelectorAll('.sub-option').forEach(s => s.classList.remove('active'))
+            const sub = document.getElementById('sub-' + cat)
+            if (sub) sub.classList.add('show')
+        }
+
+        // เลือกหัวข้อย่อย
+        function selectSub(el) {
+            const parent = el.parentElement
+            parent.querySelectorAll('.sub-option').forEach(s => s.classList.remove('active'))
+            el.classList.add('active')
+            document.getElementById('repairSubCategory').value = el.textContent.trim()
+        }
+
+        // Preview รูป
+        document.getElementById('repairPhoto').addEventListener('change', function() {
             const file = this.files[0]
             if (file) {
                 const reader = new FileReader()
@@ -198,27 +285,28 @@
         })
 
         // ส่งฟอร์ม
-        document.getElementById('repairRequestForm').addEventListener('submit', async function (e) {
+        document.getElementById('repairRequestForm').addEventListener('submit', async function(e) {
             e.preventDefault()
 
+            const category = document.getElementById('repairCategory').value
+            const subCategory = document.getElementById('repairSubCategory').value
             const location_building = document.getElementById('locationBuilding').value
             const description = document.getElementById('repairDescription').value
 
-            if (!location_building || !description) {
-                alert('❌ กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน')
-                return
-            }
+            if (!category) { alert('❌ กรุณาเลือกประเภทงานซ่อม'); return }
+            if (!location_building) { alert('❌ กรุณาเลือกอาคาร/สถานที่'); return }
+            if (!description) { alert('❌ กรุณากรอกรายละเอียด'); return }
 
             const btn = document.getElementById('submitBtn')
             btn.disabled = true
-            btn.textContent = 'กำลังส่ง...'
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังส่ง...'
 
             try {
                 let image_url = null
                 const photoFile = document.getElementById('repairPhoto').files[0]
 
                 if (photoFile) {
-                    btn.textContent = 'กำลังอัปโหลดรูป...'
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังอัปโหลดรูป...'
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader()
                         reader.onload = (e) => resolve(e.target.result)
@@ -233,23 +321,23 @@
                     if (uploadData.success) image_url = uploadData.url
                 }
 
-                btn.textContent = 'กำลังบันทึก...'
-                const token = localStorage.getItem('token')
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...'
+
+                // สร้าง title จาก category + subCategory
+                const title = subCategory ? `${category} - ${subCategory}` : category
 
                 const res = await fetch('/api/repairs', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
-                        title: document.getElementById('repairCategory').value + ' - ' + location_building,
-                        category: document.getElementById('repairCategory').value,
+                        title,
+                        category,
+                        sub_category: subCategory,
                         location_building,
                         location_detail: document.getElementById('locationDetail').value,
                         description,
                         contact_number: document.getElementById('contactNumber').value,
-                        image_url,
+                        image_url
                     })
                 })
 
@@ -260,29 +348,28 @@
                 } else {
                     alert('❌ ' + data.error)
                     btn.disabled = false
-                    btn.textContent = 'ส่งคำร้อง'
+                    btn.innerHTML = '<i class="bi bi-send me-2"></i>ส่งคำร้อง'
                 }
             } catch (err) {
                 alert('❌ เกิดข้อผิดพลาด กรุณาลองใหม่')
                 btn.disabled = false
-                btn.textContent = 'ส่งคำร้อง'
+                btn.innerHTML = '<i class="bi bi-send me-2"></i>ส่งคำร้อง'
             }
         })
 
         function resetForm() {
             document.getElementById('repairRequestForm').reset()
             document.getElementById('uploadPreview').style.display = 'none'
-            document.getElementById('mapPinIcon').style.display = 'none'
-            document.getElementById('mapHint').style.display = 'block'
-            document.getElementById('pinLocationText').textContent = ''
+            document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'))
+            document.querySelectorAll('.subcategory-section').forEach(s => s.classList.remove('show'))
+            document.querySelectorAll('.sub-option').forEach(s => s.classList.remove('active'))
+            document.getElementById('repairCategory').value = ''
+            document.getElementById('repairSubCategory').value = ''
             const now = new Date()
-            document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            })
+            document.getElementById('reportDate').value = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
             const user = JSON.parse(localStorage.getItem('user'))
             if (user) document.getElementById('reporterName').value = user.name
         }
     </script>
 </body>
-
 </html>
